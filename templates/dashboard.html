@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mapa de Tiendas</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map { height: 600px; width: 100%; margin-top: 20px; }
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h2 { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <h2>Bienvenida {{ session['nombre'] }}</h2>
+
+    <!-- Botón para ir al mapa -->
+    <div>
+        <a href="#map" style="padding: 10px 20px; background-color: #2c7be5; color: white; text-decoration: none; border-radius: 5px;">Ver mapa de tiendas</a>
+    </div>
+
+    <!-- Contenedor del mapa -->
+    <div id="map"></div>
+
+    <!-- Leaflet.js -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <script>
+        const geojsonData = {{ geojson | tojson | safe }};
+
+        const map = L.map('map').setView([25.65, -100.3], 12);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Función de color según el NPS
+        function getColor(nps) {
+            if (nps >= 60) return "green";
+            else if (nps >= 16) return "orange";
+            else return "red";
+        }
+
+        // Agrega los puntos GeoJSON
+        L.geoJSON(geojsonData, {
+            onEachFeature: function (feature, layer) {
+                const props = feature.properties;
+                const nombre = props.nombre || "Tienda";
+                const nps = props.nps || 0;
+
+                layer.bindPopup(`<strong>${nombre}</strong><br>NPS: ${nps}`);
+
+                layer.on('mouseover', function () {
+                    this.openPopup();
+                });
+                layer.on('mouseout', function () {
+                    this.closePopup();
+                });
+            },
+            pointToLayer: function (feature, latlng) {
+                const nps = feature.properties.nps || 0;
+                return L.circleMarker(latlng, {
+                    radius: 8,
+                    fillColor: getColor(nps),
+                    color: getColor(nps),
+                    weight: 1,
+                    opacity: 1,
+                    fillOpacity: 0.7
+                });
+            }
+        }).addTo(map);
+    </script>
+</body>
+</html>

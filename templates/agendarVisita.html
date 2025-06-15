@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Agendar Visita</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; padding: 40px; }
+        .container { max-width: 600px; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .autocomplete-items {
+            position: absolute;
+            z-index: 99;
+            border: 1px solid #d4d4d4;
+            background-color: white;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .autocomplete-items div {
+            padding: 10px;
+            cursor: pointer;
+        }
+        .autocomplete-items div:hover {
+            background-color: #e9e9e9;
+        }
+        .autocomplete { position: relative; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="mb-4">Agendar Visita Regular</h2>
+        <form method="POST">
+            <div class="mb-3 autocomplete">
+                <label for="nombre_tienda" class="form-label">Nombre de la tienda</label>
+                <input id="nombre_tienda" type="text" name="nombre_tienda" class="form-control" placeholder="Nombre de la tienda" autocomplete="off" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="fecha_hora" class="form-label">Fecha y hora</label>
+                <input type="datetime-local" name="fecha_hora" class="form-control" required>
+            </div>
+
+            <button type="submit" class="btn btn-success">Agendar</button>
+            <a href="{{ url_for('menu') }}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+
+    <script>
+        const tiendas = {{ tiendas | tojson | safe }};
+        const input = document.getElementById("nombre_tienda");
+
+        {% if nombre_tienda %}
+        input.value = "{{ nombre_tienda }}";
+        {% endif %}
+
+        input.addEventListener("input", function () {
+            const val = this.value.toLowerCase().trim();
+            closeAllLists();
+            if (!val) return;
+
+            const list = document.createElement("div");
+            list.setAttribute("class", "autocomplete-items");
+            this.parentNode.appendChild(list);
+
+            tiendas.forEach(function (tienda) {
+                if (tienda.toLowerCase().includes(val)) {
+                    const item = document.createElement("div");
+                    item.innerHTML = "<strong>" + tienda.substr(0, val.length) + "</strong>" + tienda.substr(val.length);
+                    item.addEventListener("click", function () {
+                        input.value = tienda;
+                        closeAllLists();
+                    });
+                    list.appendChild(item);
+                }
+            });
+        });
+
+        function closeAllLists(elmnt) {
+            const items = document.getElementsByClassName("autocomplete-items");
+            for (let i = 0; i < items.length; i++) {
+                if (elmnt !== items[i] && elmnt !== input) {
+                    items[i].parentNode.removeChild(items[i]);
+                }
+            }
+        }
+
+        document.addEventListener("click", function (e) {
+            closeAllLists(e.target);
+        });
+    </script>
+</body>
+</html>
+

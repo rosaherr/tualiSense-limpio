@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mapa de Tiendas</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+
+        .leaflet-popup-content a {
+            display: inline-block;
+            margin-top: 5px;
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .leaflet-popup-content a:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Leer y parsear geojson inyectado por Flask
+        const rawGeojson = '{{ geojson | tojson | safe }}';
+        const geojsonData = JSON.parse(rawGeojson);
+
+        // Crear el mapa y centrarlo
+        const map = L.map('map').setView([25.65, -100.3], 12);
+
+        // Agregar capa base de OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Función para elegir color según NPS
+        function getColor(nps) {
+            nps = parseFloat(nps);
+            if (nps >= 60) return "green";
+            else if (nps >= 16) return "orange";
+            else return "red";
+        }
+
+        // Agregar puntos geojson al mapa
+        L.geoJSON(geojsonData, {
+            pointToLayer: function (feature, latlng) {
+                const nps = parseFloat(feature.properties.nps) || 0;
+                return L.circleMarker(latlng, {
+                    radius: 8,
+                    fillColor: getColor(nps),
+                    color: getColor(nps),
+                    weight: 1,
+                    opacity: 1,
+                    fillOpacity: 0.7
+                });
+            },
+            onEachFeature: function (feature, layer) {
+                const props = feature.properties;
+                const nombre = props.nombre || "Tienda";
+                const nps = props.nps || "N/A";
+                const id = props.id || props.col0;
+
+                const popupContent = `
+                    <strong>${nombre}</strong><br>
+                    NPS: ${nps}<br>
+                    <a href="/formulario/${id}" target="_blank">📝 Llenar formulario</a>
+                `;
+
+                layer.bindPopup(popupContent);
+            }
+        }).addTo(map);
+    </script>
+</body>
+</html>

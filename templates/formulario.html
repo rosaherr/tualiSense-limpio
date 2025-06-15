@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Formulario de Evaluación</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .container { max-width: 700px; margin-top: 30px; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        #nps-slider::-webkit-slider-thumb { background-color: currentColor; }
+        #nps-slider { accent-color: currentColor; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="mb-4">Formulario de Evaluación para <strong>{{ tienda.properties.nombre }}</strong></h2>
+
+        <form method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="satisfaccion" class="form-label">¿Cómo calificaría la experiencia general con nuestros productos?</label>
+                <select name="satisfaccion" id="satisfaccion" class="form-select" required>
+                    <option value="Muy Satisfecho">Muy Satisfecho</option>
+                    <option value="Satisfecho">Satisfecho</option>
+                    <option value="Neutral">Neutral</option>
+                    <option value="Insatisfecho">Insatisfecho</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">¿Recomendaría nuestros productos?</label><br>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="recomendacion" value="1" required>
+                    <label class="form-check-label">Sí</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="recomendacion" value="0">
+                    <label class="form-check-label">No</label>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="limpieza" class="form-label">Califique la limpieza de exhibidores (1-10)</label>
+                <input type="number" name="limpieza" id="limpieza" min="1" max="10" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="comentario" class="form-label">Comentario del cliente</label>
+                <textarea name="comentario" id="comentario" rows="3" class="form-control"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="nps" class="form-label">Puntaje NPS (0-100)</label>
+                <input type="range" name="nps" id="nps-slider" min="0" max="100" value="50" class="form-range">
+                <div id="nps-display" class="mt-1 fw-bold">50</div>
+                <input type="hidden" name="nps" id="nps" value="50">
+            </div>
+
+            <div class="mb-3">
+                <label for="foto" class="form-label">Suba evidencia fotográfica</label>
+                <input type="file" name="foto" id="foto" accept="image/*" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label>¿Desea agendar otra visita?</label><br>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="reagendar" id="reagendar_si" value="1" required>
+                    <label class="form-check-label" for="reagendar_si">Sí</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="reagendar" id="reagendar_no" value="0">
+                    <label class="form-check-label" for="reagendar_no">No</label>
+                </div>
+                <div id="reagendar-alerta" style="color: red; display: none; font-weight: bold; margin-top: 5px;">
+                    Para un NPS menor o igual a 15, es obligatorio reagendar.
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Enviar evaluación</button>
+                <a href="{{ url_for('menu') }}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const slider = document.getElementById("nps-slider");
+        const npsHidden = document.getElementById("nps");
+        const display = document.getElementById("nps-display");
+        const reagendarSi = document.getElementById("reagendar_si");
+        const reagendarNo = document.getElementById("reagendar_no");
+        const alerta = document.getElementById("reagendar-alerta");
+
+        function actualizarSliderColor(nps) {
+            if (nps <= 15) {
+                slider.style.color = "red";
+                display.style.color = "red";
+            } else if (nps <= 59) {
+                slider.style.color = "orange";
+                display.style.color = "orange";
+            } else {
+                slider.style.color = "green";
+                display.style.color = "green";
+            }
+        }
+
+        function validarReagendar() {
+            const nps = parseFloat(slider.value);
+            npsHidden.value = slider.value;
+            display.textContent = slider.value;
+            actualizarSliderColor(nps);
+
+            if (!isNaN(nps) && nps <= 15) {
+                reagendarSi.checked = true;
+                reagendarNo.disabled = true;
+                alerta.style.display = "block";
+            } else {
+                reagendarNo.disabled = false;
+                alerta.style.display = "none";
+            }
+        }
+
+        slider.addEventListener("input", validarReagendar);
+        validarReagendar();
+    </script>
+</body>
+</html>
+
+
+
